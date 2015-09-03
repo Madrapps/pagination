@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="MovingDots">
+        <attr name="dot_count" format="integer" />
+        <attr name="dot_min_radius" format="dimension" />
+        <attr name="dot_max_radius" format="dimension" />
+        <attr name="dot_color" format="color" />
+        <attr name="dot_spacing" format="dimension" />
+    </declare-styleable>
+</resources>
