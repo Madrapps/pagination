@@ -104,7 +104,10 @@ public class MovingDots extends View {
         final float yPos = canvas.getHeight() / 2;
         float xPos = left;
 
-        if (currentDot == dotCount) {
+        if (currentDot < 1) {
+            currentDot = 1;
+        }
+        if (currentDot > dotCount) {
             xPos = lastXPos;
             dotRadius = lastRadius;
             canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
@@ -121,16 +124,6 @@ public class MovingDots extends View {
                 if (dotIndex != 1) {
                     canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
                 }
-
-                // If the currentDot is the last Dot, then save the coordinate of the first and last dot;
-                if (currentDot == dotCount) {
-                    if (dotIndex == 1) {
-                        firstDotXPos = xPos;
-                    } else if (dotIndex == dotCount) {
-                        lastDotXPos = xPos;
-                    }
-                }
-
                 xPos += dotRadius + dotSpacing;
             }
         } else {
@@ -170,11 +163,8 @@ public class MovingDots extends View {
         Log.d("TAG", "III LAST X POS = " + lastXPos);
 
         currentDot += index;
-        if (currentDot < 1) {
-            currentDot = 1;
-            invalidate();
-        } else if (currentDot > dotCount) {
-            currentDot = dotCount;
+        if (currentDot > dotCount) {
+            currentDot = dotCount + 1;
             runnable.run();
         } else {
             invalidate();
@@ -184,15 +174,17 @@ public class MovingDots extends View {
     private void initAnim() {
         lastRadius++;
         firstRadius -= dotMinRadius / dotMaxRadius;
-        lastXPos -= 5;
-        firstXPos -= 5;
-        shift += (dotSpacing + 2 * dotMinRadius) / dotMaxRadius;
+        final float gap = dotSpacing + 2 * dotMinRadius;
+        shift += gap / dotMaxRadius;
+
+        lastXPos = lastDotXPos + gap - shift;
+        firstXPos = firstDotXPos - shift;
         Log.d("TAG", "SHIFT = " + shift);
 
         if (lastRadius == dotMaxRadius) {
             handler.removeCallbacks(runnable);
         } else {
-            handler.postDelayed(runnable, 200);
+            handler.postDelayed(runnable, 20);
         }
         invalidate();
     }
