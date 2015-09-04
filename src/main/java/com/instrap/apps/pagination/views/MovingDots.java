@@ -8,7 +8,6 @@ import android.graphics.Paint;
 import android.os.Handler;
 import android.support.annotation.IntDef;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 
 import com.instrap.apps.pagination.R;
@@ -21,37 +20,28 @@ import java.lang.annotation.RetentionPolicy;
  */
 public class MovingDots extends View {
 
+    public static final int TYPE_FORWARD = 1;
+    public static final int TYPE_BACKWARD = -1;
+    // For drawing/animating the first and last dots
     private float lastRadius = 0;
     private float firstRadius = 0;
-
     private float lastXPos = 0;
     private float firstXPos = 0;
-
     private Handler handler;
     private Runnable runnable;
     private float shift;
-
-    @IntDef({TYPE_BACKWARD, TYPE_FORWARD})
-    @Retention(RetentionPolicy.SOURCE)
-    public @interface Type {
-    }
-
     private Paint paintDots;
     private float dotRadius;
+    private int currentDot;
+    // Stuff to get from the attributes
     private float dotSpacing;
     private int dotColor;
     private float dotMinRadius;
     private float dotMaxRadius;
     private int dotCount;
-
-    private int currentDot;
-
-    public static final int TYPE_FORWARD = 1;
-    public static final int TYPE_BACKWARD = -1;
-
+    // The xPosition of the first and last dot. Needed for the animation
     private float firstDotXPos = 0;
     private float lastDotXPos = 0;
-
     public MovingDots(Context context, AttributeSet attrs) {
         super(context, attrs);
         initialize(context, attrs);
@@ -70,16 +60,17 @@ public class MovingDots extends View {
         dotMaxRadius = typedArray.getDimension(R.styleable.MovingDots_dot_max_radius, 30);
         dotCount = typedArray.getInteger(R.styleable.MovingDots_dot_count, 5);
         dotSpacing = typedArray.getDimension(R.styleable.MovingDots_dot_spacing, 10);
-
         typedArray.recycle();
 
         paintDots = new Paint(Paint.ANTI_ALIAS_FLAG);
         paintDots.setStyle(Paint.Style.FILL);
         paintDots.setColor(dotColor);
 
+        // Initialize some parameters
         dotRadius = dotMinRadius;
         currentDot = 1;
 
+        // Handler for the animation
         handler = new Handler();
         runnable = new Runnable() {
             @Override
@@ -91,6 +82,7 @@ public class MovingDots extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        // The width is the width of parent. The height is the maximum height of the dot
         final int measuredHeight = (int) Math.ceil(dotMaxRadius * 2);
         final int measuredWidth = MeasureSpec.getSize(widthMeasureSpec);
         setMeasuredDimension(measuredWidth, measuredHeight);
@@ -99,25 +91,35 @@ public class MovingDots extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         int width = canvas.getWidth();
-        final float drawLength = dotMinRadius * 2 * (dotCount - 1) + 2 * dotMaxRadius + (dotCount - 1) * dotSpacing;
-        final float left = (width - drawLength) / 2;
-        final float yPos = canvas.getHeight() / 2;
-        float xPos = left;
 
+        // The total length to be drawn
+        final float drawLength = dotMinRadius * 2 * (dotCount - 1) + 2 * dotMaxRadius + (dotCount - 1) * dotSpacing;
+        // The left most point to be drawn
+        final float left = (width - drawLength) / 2;
+
+        // yPos is a constant and never varies, xPos varies one by one so each dot can be drawn
+        float xPos;
+        final float yPos = canvas.getHeight() / 2;
+
+        // Do not move past the first dot.
         if (currentDot < 1) {
             currentDot = 1;
         }
+
+        // Animate if currentDot has exceeded the dotCount
         if (currentDot > dotCount) {
+            // Draw the last dot
             xPos = lastXPos;
             dotRadius = lastRadius;
             canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
 
+            // Draw the first dot
             xPos = firstXPos;
             dotRadius = firstRadius;
             canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
 
+            // Draw all the dots between them. Shift them on each onDraw call
             xPos = left - shift;
-            Log.d("TAG", "XPOS SHIFTED = " + xPos);
             dotRadius = dotMinRadius;
             for (int dotIndex = 1; dotIndex <= dotCount; dotIndex++) {
                 xPos += dotRadius;
@@ -127,6 +129,7 @@ public class MovingDots extends View {
                 xPos += dotRadius + dotSpacing;
             }
         } else {
+            // If currentDot is between 1 and dotCount, do not animate. Just draw static stuff.
             xPos = left;
             for (int dotIndex = 1; dotIndex <= dotCount; dotIndex++) {
                 if (dotIndex == currentDot) {
@@ -152,26 +155,31 @@ public class MovingDots extends View {
         }
     }
 
+    /**
+     * Moves the Dot front or back
+     *
+     * @param index {@code TYPE_FORWARD} to step front, {@code TYPE_BACKWARD} to step back
+     */
     public void paginate(@Type int index) {
+
+        // Reset global stuff
         lastRadius = 0;
         firstRadius = dotMinRadius;
         shift = 0;
 
-        lastXPos = lastDotXPos + (dotMaxRadius * 5);
-        firstXPos = firstDotXPos;
-
-        Log.d("TAG", "III LAST X POS = " + lastXPos);
-
         currentDot += index;
         if (currentDot > dotCount) {
+            // If currentDot is more than the dotCount, then animate. Always make sure that the currentDot is only one greater than the dotCount.
             currentDot = dotCount + 1;
             runnable.run();
         } else {
+            // Draw static stuff, no animation
             invalidate();
         }
     }
 
     private void initAnim() {
+        // Increase all the parameters in slow increments for each onDraw, so as to animate.
         lastRadius++;
         firstRadius -= dotMinRadius / dotMaxRadius;
         final float gap = dotSpacing + 2 * dotMinRadius;
@@ -179,13 +187,18 @@ public class MovingDots extends View {
 
         lastXPos = lastDotXPos + gap - shift;
         firstXPos = firstDotXPos - shift;
-        Log.d("TAG", "SHIFT = " + shift);
 
         if (lastRadius == dotMaxRadius) {
+            // Stop animation.
             handler.removeCallbacks(runnable);
         } else {
             handler.postDelayed(runnable, 20);
         }
         invalidate();
+    }
+
+    @IntDef({TYPE_BACKWARD, TYPE_FORWARD})
+    @Retention(RetentionPolicy.SOURCE)
+    public @interface Type {
     }
 }
