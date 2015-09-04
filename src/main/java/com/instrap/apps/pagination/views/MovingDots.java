@@ -16,7 +16,9 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Created by tsaravana on 8/30/2015.
+ * View for Pagination.
+ * <p/>
+ * Created by Henry on 8/30/2015.
  */
 public class MovingDots extends View {
 
@@ -42,6 +44,7 @@ public class MovingDots extends View {
     // The xPosition of the first and last dot. Needed for the animation
     private float firstDotXPos = 0;
     private float lastDotXPos = 0;
+
     public MovingDots(Context context, AttributeSet attrs) {
         super(context, attrs);
         initialize(context, attrs);
@@ -196,6 +199,17 @@ public class MovingDots extends View {
         }
         invalidate();
     }
+
+
+    public int getDotColor() {
+        return dotColor;
+    }
+
+    public void setDotColor(int dotColor) {
+        this.dotColor = dotColor;
+        invalidate();
+    }
+
 
     @IntDef({TYPE_BACKWARD, TYPE_FORWARD})
     @Retention(RetentionPolicy.SOURCE)
