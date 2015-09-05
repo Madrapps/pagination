@@ -28,6 +28,7 @@ public class MovingDots extends View {
     private float firstRadius = 0;
     private float lastXPos = 0;
     private float firstXPos = 0;
+    // For animation
     private Handler handlerTraverse;
     private Runnable runnableTraverse;
     private Handler handlerVisibility;
@@ -60,77 +61,6 @@ public class MovingDots extends View {
         initialize(context, attrs);
     }
 
-    private void initialize(Context context, AttributeSet attrs) {
-
-        final TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MovingDots);
-        dotColor = typedArray.getColor(R.styleable.MovingDots_dot_color, Color.WHITE);
-        dotMinRadius = typedArray.getDimension(R.styleable.MovingDots_dot_min_radius, 20);
-        dotMaxRadius = typedArray.getDimension(R.styleable.MovingDots_dot_max_radius, 30);
-        dotCount = typedArray.getInteger(R.styleable.MovingDots_dot_count, 5);
-        dotSpacing = typedArray.getDimension(R.styleable.MovingDots_dot_spacing, 10);
-        typedArray.recycle();
-
-        paintDots = new Paint(Paint.ANTI_ALIAS_FLAG);
-        paintDots.setStyle(Paint.Style.FILL);
-        paintDots.setColor(dotColor);
-
-        // Initialize some parameters
-        dotRadius = dotMinRadius;
-        currentDot = 1;
-
-        // Handler for the animation
-        handlerTraverse = new Handler();
-        runnableTraverse = new Runnable() {
-            @Override
-            public void run() {
-                animateTraverse();
-            }
-        };
-
-        // Handler for the animation
-        handlerVisibility = new Handler();
-        runnableVisibility = new Runnable() {
-
-            @Override
-            public void run() {
-                animateVisibility();
-            }
-        };
-    }
-
-
-    /**
-     * Hides or shows the dots
-     *
-     * @param isVisible if true, the dots will be visible; if false, the dots are hidden
-     */
-    public void setVisibility(boolean isVisible) {
-
-        visibilityRadius = 0;
-        tempVisible = isVisible;
-        runnableVisibility.run();
-    }
-
-    private void animateVisibility() {
-        visibilityRadius++;
-
-        if (visibilityRadius > dotMaxRadius) {
-            // Stop animation.
-            handlerVisibility.removeCallbacks(runnableVisibility);
-            this.isVisible = tempVisible;
-        } else {
-            handlerVisibility.postDelayed(runnableVisibility, 20);
-        }
-        invalidate();
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // The width is the width of parent. The height is the maximum height of the dot
-        final int measuredHeight = (int) Math.ceil(dotMaxRadius * 2);
-        final int measuredWidth = MeasureSpec.getSize(widthMeasureSpec);
-        setMeasuredDimension(measuredWidth, measuredHeight);
-    }
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -146,44 +76,11 @@ public class MovingDots extends View {
 
 
         if (tempVisible != isVisible) {
-            xPos = left;
-            for (int dotIndex = 1; dotIndex <= dotCount; dotIndex++) {
-                if (dotIndex == currentDot) {
-                    dotRadius = dotMaxRadius;
-                } else {
-                    dotRadius = dotMinRadius;
-                }
-
-                xPos += dotRadius;
-
-                float radius;
-                if (tempVisible) {
-                    radius = Math.min(visibilityRadius, dotMinRadius);
-                    if (dotIndex == currentDot) {
-                        radius = visibilityRadius;
-                    }
-                } else {
-                    radius = dotRadius - visibilityRadius;
-                }
-
-                canvas.drawCircle(xPos, yPos, radius, paintDots);
-
-                // If the currentDot is the last Dot, then save the coordinate of the first and last dot;
-                if (currentDot == dotCount) {
-                    if (dotIndex == 1) {
-                        firstDotXPos = xPos;
-                    } else if (dotIndex == dotCount) {
-                        lastDotXPos = xPos;
-                    }
-                }
-
-                xPos += dotRadius + dotSpacing;
-            }
+            drawVisibilityAnimation(canvas, left, yPos);
             return;
         } else if (!isVisible) {
             return;
         }
-
 
         // Do not go before the first dot.
         if (currentDot < 1) {
@@ -196,6 +93,112 @@ public class MovingDots extends View {
         } else {
             // If currentDot is between 1 and dotCount, do not animate. Just draw static stuff.
             drawStaticDots(canvas, left, yPos);
+        }
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        // The width is the width of parent. The height is the maximum height of the dot
+        final int measuredHeight = (int) Math.ceil(dotMaxRadius * 2);
+        final int measuredWidth = MeasureSpec.getSize(widthMeasureSpec);
+        setMeasuredDimension(measuredWidth, measuredHeight);
+    }
+
+    /**
+     * Hides the pagination bar
+     */
+    public void hide() {
+        visibilityRadius = 0;
+        tempVisible = false;
+        runnableVisibility.run();
+    }
+
+    /**
+     * Moves the Dot front or back
+     *
+     * @param index {@code TYPE_FORWARD} to step front, {@code TYPE_BACKWARD} to step back
+     */
+    public void paginate(@Type int index) {
+
+        // Reset global stuff
+        lastRadius = 0;
+        firstRadius = dotMinRadius;
+        shift = 0;
+
+        currentDot += index;
+        if (currentDot > dotCount) {
+            // If currentDot is more than the dotCount, then animate. Always make sure that the currentDot is only one greater than the dotCount.
+            currentDot = dotCount + 1;
+            runnableTraverse.run();
+        } else {
+            // Draw static stuff, no animation
+            invalidate();
+        }
+    }
+
+    /**
+     * Shows the pagination bar
+     */
+    public void show() {
+        visibilityRadius = 0;
+        tempVisible = true;
+        runnableVisibility.run();
+    }
+
+    private void animateTraverse() {
+        // Increase all the parameters in slow increments for each onDraw, so as to animate.
+        lastRadius++;
+        firstRadius -= dotMinRadius / dotMaxRadius;
+        final float gap = dotSpacing + 2 * dotMinRadius;
+        shift += gap / dotMaxRadius;
+
+        lastXPos = lastDotXPos + gap - shift;
+        firstXPos = firstDotXPos - shift;
+
+        if (lastRadius == dotMaxRadius) {
+            // Stop animation.
+            handlerTraverse.removeCallbacks(runnableTraverse);
+            // Make the last dot as the currentDot, so that going backward makes sense
+            currentDot = dotCount;
+        } else {
+            handlerTraverse.postDelayed(runnableTraverse, 20);
+        }
+        invalidate();
+    }
+
+    private void animateVisibility() {
+        visibilityRadius++;
+
+        if (visibilityRadius > dotMaxRadius) {
+            // Stop animation.
+            handlerVisibility.removeCallbacks(runnableVisibility);
+            this.isVisible = tempVisible;
+        } else {
+            handlerVisibility.postDelayed(runnableVisibility, 20);
+        }
+        invalidate();
+    }
+
+    private void drawDotsShiftAnimation(Canvas canvas, float left, float yPos) {
+        float xPos;// Draw the last dot
+        xPos = lastXPos;
+        dotRadius = lastRadius;
+        canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
+
+        // Draw the first dot
+        xPos = firstXPos;
+        dotRadius = firstRadius;
+        canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
+
+        // Draw all the dots between them. Shift them on each onDraw call
+        xPos = left - shift;
+        dotRadius = dotMinRadius;
+        for (int dotIndex = 1; dotIndex <= dotCount; dotIndex++) {
+            xPos += dotRadius;
+            if (dotIndex != 1) {
+                canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
+            }
+            xPos += dotRadius + dotSpacing;
         }
     }
 
@@ -225,71 +228,79 @@ public class MovingDots extends View {
         }
     }
 
-    private void drawDotsShiftAnimation(Canvas canvas, float left, float yPos) {
-        float xPos;// Draw the last dot
-        xPos = lastXPos;
-        dotRadius = lastRadius;
-        canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
-
-        // Draw the first dot
-        xPos = firstXPos;
-        dotRadius = firstRadius;
-        canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
-
-        // Draw all the dots between them. Shift them on each onDraw call
-        xPos = left - shift;
-        dotRadius = dotMinRadius;
+    private void drawVisibilityAnimation(Canvas canvas, float left, float yPos) {
+        float xPos;
+        xPos = left;
         for (int dotIndex = 1; dotIndex <= dotCount; dotIndex++) {
-            xPos += dotRadius;
-            if (dotIndex != 1) {
-                canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
+            if (dotIndex == currentDot) {
+                dotRadius = dotMaxRadius;
+            } else {
+                dotRadius = dotMinRadius;
             }
+            xPos += dotRadius;
+
+            // Calculate radius for both show and hide scenario
+            float radius;
+            if (tempVisible) {
+                radius = Math.min(visibilityRadius, dotMinRadius);
+                if (dotIndex == currentDot) {
+                    radius = visibilityRadius;
+                }
+            } else {
+                radius = dotRadius - visibilityRadius;
+            }
+
+            canvas.drawCircle(xPos, yPos, radius, paintDots);
+
+            // If the currentDot is the last Dot, then save the coordinate of the first and last dot;
+            if (currentDot == dotCount) {
+                if (dotIndex == 1) {
+                    firstDotXPos = xPos;
+                } else if (dotIndex == dotCount) {
+                    lastDotXPos = xPos;
+                }
+            }
+
             xPos += dotRadius + dotSpacing;
         }
     }
 
-    /**
-     * Moves the Dot front or back
-     *
-     * @param index {@code TYPE_FORWARD} to step front, {@code TYPE_BACKWARD} to step back
-     */
-    public void paginate(@Type int index) {
+    private void initialize(Context context, AttributeSet attrs) {
 
-        // Reset global stuff
-        lastRadius = 0;
-        firstRadius = dotMinRadius;
-        shift = 0;
+        final TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.MovingDots);
+        dotColor = typedArray.getColor(R.styleable.MovingDots_dot_color, Color.WHITE);
+        dotMinRadius = typedArray.getDimension(R.styleable.MovingDots_dot_min_radius, 20);
+        dotMaxRadius = typedArray.getDimension(R.styleable.MovingDots_dot_max_radius, 30);
+        dotCount = typedArray.getInteger(R.styleable.MovingDots_dot_count, 5);
+        dotSpacing = typedArray.getDimension(R.styleable.MovingDots_dot_spacing, 10);
+        typedArray.recycle();
 
-        currentDot += index;
-        if (currentDot > dotCount) {
-            // If currentDot is more than the dotCount, then animate. Always make sure that the currentDot is only one greater than the dotCount.
-            currentDot = dotCount + 1;
-            runnableTraverse.run();
-        } else {
-            // Draw static stuff, no animation
-            invalidate();
-        }
-    }
+        paintDots = new Paint(Paint.ANTI_ALIAS_FLAG);
+        paintDots.setStyle(Paint.Style.FILL);
+        paintDots.setColor(dotColor);
 
-    private void animateTraverse() {
-        // Increase all the parameters in slow increments for each onDraw, so as to animate.
-        lastRadius++;
-        firstRadius -= dotMinRadius / dotMaxRadius;
-        final float gap = dotSpacing + 2 * dotMinRadius;
-        shift += gap / dotMaxRadius;
+        // Initialize some parameters
+        dotRadius = dotMinRadius;
+        currentDot = 1;
 
-        lastXPos = lastDotXPos + gap - shift;
-        firstXPos = firstDotXPos - shift;
+        // Handler for the traverse animation
+        handlerTraverse = new Handler();
+        runnableTraverse = new Runnable() {
+            @Override
+            public void run() {
+                animateTraverse();
+            }
+        };
 
-        if (lastRadius == dotMaxRadius) {
-            // Stop animation.
-            handlerTraverse.removeCallbacks(runnableTraverse);
-            // Make the last dot as the currentDot, so that going backward makes sense
-            currentDot = dotCount;
-        } else {
-            handlerTraverse.postDelayed(runnableTraverse, 20);
-        }
-        invalidate();
+        // Handler for the show/hide animation
+        handlerVisibility = new Handler();
+        runnableVisibility = new Runnable() {
+
+            @Override
+            public void run() {
+                animateVisibility();
+            }
+        };
     }
 
     public int getDotColor() {
@@ -305,4 +316,5 @@ public class MovingDots extends View {
     @Retention(RetentionPolicy.SOURCE)
     public @interface Type {
     }
+
 }
