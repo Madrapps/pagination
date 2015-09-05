@@ -17,7 +17,6 @@ import java.lang.annotation.RetentionPolicy;
 
 /**
  * View for Pagination.
- * <p/>
  * Created by Henry on 8/30/2015.
  */
 public class MovingDots extends View {
@@ -29,8 +28,10 @@ public class MovingDots extends View {
     private float firstRadius = 0;
     private float lastXPos = 0;
     private float firstXPos = 0;
-    private Handler handler;
-    private Runnable runnable;
+    private Handler handlerTraverse;
+    private Runnable runnableTraverse;
+    private Handler handlerVisibility;
+    private Runnable runnableVisibility;
     private float shift;
     private Paint paintDots;
     private float dotRadius;
@@ -44,6 +45,10 @@ public class MovingDots extends View {
     // The xPosition of the first and last dot. Needed for the animation
     private float firstDotXPos = 0;
     private float lastDotXPos = 0;
+
+    private boolean isVisible = true;
+    private boolean tempVisible = true;
+    private int visibilityRadius;
 
     public MovingDots(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -74,13 +79,49 @@ public class MovingDots extends View {
         currentDot = 1;
 
         // Handler for the animation
-        handler = new Handler();
-        runnable = new Runnable() {
+        handlerTraverse = new Handler();
+        runnableTraverse = new Runnable() {
             @Override
             public void run() {
-                initAnim();
+                animateTraverse();
             }
         };
+
+        // Handler for the animation
+        handlerVisibility = new Handler();
+        runnableVisibility = new Runnable() {
+
+            @Override
+            public void run() {
+                animateVisibility();
+            }
+        };
+    }
+
+
+    /**
+     * Hides or shows the dots
+     *
+     * @param isVisible if true, the dots will be visible; if false, the dots are hidden
+     */
+    public void setVisibility(boolean isVisible) {
+
+        visibilityRadius = 0;
+        tempVisible = isVisible;
+        runnableVisibility.run();
+    }
+
+    private void animateVisibility() {
+        visibilityRadius++;
+
+        if (visibilityRadius > dotMaxRadius) {
+            // Stop animation.
+            handlerVisibility.removeCallbacks(runnableVisibility);
+            this.isVisible = tempVisible;
+        } else {
+            handlerVisibility.postDelayed(runnableVisibility, 20);
+        }
+        invalidate();
     }
 
     @Override
@@ -93,46 +134,18 @@ public class MovingDots extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        int width = canvas.getWidth();
 
         // The total length to be drawn
         final float drawLength = dotMinRadius * 2 * (dotCount - 1) + 2 * dotMaxRadius + (dotCount - 1) * dotSpacing;
         // The left most point to be drawn
-        final float left = (width - drawLength) / 2;
+        final float left = (canvas.getWidth() - drawLength) / 2;
 
         // yPos is a constant and never varies, xPos varies one by one so each dot can be drawn
         float xPos;
         final float yPos = canvas.getHeight() / 2;
 
-        // Do not move past the first dot.
-        if (currentDot < 1) {
-            currentDot = 1;
-        }
 
-        // Animate if currentDot has exceeded the dotCount
-        if (currentDot > dotCount) {
-            // Draw the last dot
-            xPos = lastXPos;
-            dotRadius = lastRadius;
-            canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
-
-            // Draw the first dot
-            xPos = firstXPos;
-            dotRadius = firstRadius;
-            canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
-
-            // Draw all the dots between them. Shift them on each onDraw call
-            xPos = left - shift;
-            dotRadius = dotMinRadius;
-            for (int dotIndex = 1; dotIndex <= dotCount; dotIndex++) {
-                xPos += dotRadius;
-                if (dotIndex != 1) {
-                    canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
-                }
-                xPos += dotRadius + dotSpacing;
-            }
-        } else {
-            // If currentDot is between 1 and dotCount, do not animate. Just draw static stuff.
+        if (tempVisible != isVisible) {
             xPos = left;
             for (int dotIndex = 1; dotIndex <= dotCount; dotIndex++) {
                 if (dotIndex == currentDot) {
@@ -142,7 +155,18 @@ public class MovingDots extends View {
                 }
 
                 xPos += dotRadius;
-                canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
+
+                float radius;
+                if (tempVisible) {
+                    radius = Math.min(visibilityRadius, dotMinRadius);
+                    if (dotIndex == currentDot) {
+                        radius = visibilityRadius;
+                    }
+                } else {
+                    radius = dotRadius - visibilityRadius;
+                }
+
+                canvas.drawCircle(xPos, yPos, radius, paintDots);
 
                 // If the currentDot is the last Dot, then save the coordinate of the first and last dot;
                 if (currentDot == dotCount) {
@@ -155,6 +179,72 @@ public class MovingDots extends View {
 
                 xPos += dotRadius + dotSpacing;
             }
+            return;
+        } else if (!isVisible) {
+            return;
+        }
+
+
+        // Do not go before the first dot.
+        if (currentDot < 1) {
+            currentDot = 1;
+        }
+
+        if (currentDot > dotCount) {
+            // Animate if currentDot has exceeded the dotCount
+            drawDotsShiftAnimation(canvas, left, yPos);
+        } else {
+            // If currentDot is between 1 and dotCount, do not animate. Just draw static stuff.
+            drawStaticDots(canvas, left, yPos);
+        }
+    }
+
+    private void drawStaticDots(Canvas canvas, float left, float yPos) {
+        float xPos;
+        xPos = left;
+        for (int dotIndex = 1; dotIndex <= dotCount; dotIndex++) {
+            if (dotIndex == currentDot) {
+                dotRadius = dotMaxRadius;
+            } else {
+                dotRadius = dotMinRadius;
+            }
+
+            xPos += dotRadius;
+            canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
+
+            // If the currentDot is the last Dot, then save the coordinate of the first and last dot;
+            if (currentDot == dotCount) {
+                if (dotIndex == 1) {
+                    firstDotXPos = xPos;
+                } else if (dotIndex == dotCount) {
+                    lastDotXPos = xPos;
+                }
+            }
+
+            xPos += dotRadius + dotSpacing;
+        }
+    }
+
+    private void drawDotsShiftAnimation(Canvas canvas, float left, float yPos) {
+        float xPos;// Draw the last dot
+        xPos = lastXPos;
+        dotRadius = lastRadius;
+        canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
+
+        // Draw the first dot
+        xPos = firstXPos;
+        dotRadius = firstRadius;
+        canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
+
+        // Draw all the dots between them. Shift them on each onDraw call
+        xPos = left - shift;
+        dotRadius = dotMinRadius;
+        for (int dotIndex = 1; dotIndex <= dotCount; dotIndex++) {
+            xPos += dotRadius;
+            if (dotIndex != 1) {
+                canvas.drawCircle(xPos, yPos, dotRadius, paintDots);
+            }
+            xPos += dotRadius + dotSpacing;
         }
     }
 
@@ -174,14 +264,14 @@ public class MovingDots extends View {
         if (currentDot > dotCount) {
             // If currentDot is more than the dotCount, then animate. Always make sure that the currentDot is only one greater than the dotCount.
             currentDot = dotCount + 1;
-            runnable.run();
+            runnableTraverse.run();
         } else {
             // Draw static stuff, no animation
             invalidate();
         }
     }
 
-    private void initAnim() {
+    private void animateTraverse() {
         // Increase all the parameters in slow increments for each onDraw, so as to animate.
         lastRadius++;
         firstRadius -= dotMinRadius / dotMaxRadius;
@@ -193,13 +283,14 @@ public class MovingDots extends View {
 
         if (lastRadius == dotMaxRadius) {
             // Stop animation.
-            handler.removeCallbacks(runnable);
+            handlerTraverse.removeCallbacks(runnableTraverse);
+            // Make the last dot as the currentDot, so that going backward makes sense
+            currentDot = dotCount;
         } else {
-            handler.postDelayed(runnable, 20);
+            handlerTraverse.postDelayed(runnableTraverse, 20);
         }
         invalidate();
     }
-
 
     public int getDotColor() {
         return dotColor;
@@ -209,7 +300,6 @@ public class MovingDots extends View {
         this.dotColor = dotColor;
         invalidate();
     }
-
 
     @IntDef({TYPE_BACKWARD, TYPE_FORWARD})
     @Retention(RetentionPolicy.SOURCE)
