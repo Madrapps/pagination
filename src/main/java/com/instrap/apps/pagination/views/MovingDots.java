@@ -46,21 +46,17 @@ public class MovingDots extends View {
     // The xPosition of the first and last dot. Needed for the animation
     private float firstDotXPos = 0;
     private float lastDotXPos = 0;
-
     private boolean isVisible = true;
     private boolean tempVisible = true;
     private int visibilityRadius;
-
     public MovingDots(Context context, AttributeSet attrs) {
         super(context, attrs);
         initialize(context, attrs);
     }
-
     public MovingDots(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initialize(context, attrs);
     }
-
 
     @Override
     protected void onDraw(Canvas canvas) {
@@ -301,6 +297,15 @@ public class MovingDots extends View {
                 animateVisibility();
             }
         };
+    }
+
+    public int getCurrentDot() {
+        return currentDot;
+    }
+
+    public void setCurrentDot(int currentDot) {
+        this.currentDot = currentDot;
+        invalidate();
     }
 
     public int getDotColor() {
