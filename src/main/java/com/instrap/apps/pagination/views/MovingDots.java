@@ -16,7 +16,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * View for Pagination.
+ * View for Pagination
  * Created by Henry on 8/30/2015.
  */
 public class MovingDots extends View {
