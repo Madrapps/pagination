@@ -46,7 +46,6 @@ public class MovingDots extends View {
     // The xPosition of the first and last dot. Needed for the animation
     private float firstDotXPos = 0;
     private float lastDotXPos = 0;
-
     private boolean isVisible = true;
     private boolean tempVisible = true;
     private int visibilityRadius;
@@ -59,49 +58,6 @@ public class MovingDots extends View {
     public MovingDots(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initialize(context, attrs);
-    }
-
-
-    @Override
-    protected void onDraw(Canvas canvas) {
-
-        // The total length to be drawn
-        final float drawLength = dotMinRadius * 2 * (dotCount - 1) + 2 * dotMaxRadius + (dotCount - 1) * dotSpacing;
-        // The left most point to be drawn
-        final float left = (canvas.getWidth() - drawLength) / 2;
-
-        // yPos is a constant and never varies, xPos varies one by one so each dot can be drawn
-        float xPos;
-        final float yPos = canvas.getHeight() / 2;
-
-
-        if (tempVisible != isVisible) {
-            drawVisibilityAnimation(canvas, left, yPos);
-            return;
-        } else if (!isVisible) {
-            return;
-        }
-
-        // Do not go before the first dot.
-        if (currentDot < 1) {
-            currentDot = 1;
-        }
-
-        if (currentDot > dotCount) {
-            // Animate if currentDot has exceeded the dotCount
-            drawDotsShiftAnimation(canvas, left, yPos);
-        } else {
-            // If currentDot is between 1 and dotCount, do not animate. Just draw static stuff.
-            drawStaticDots(canvas, left, yPos);
-        }
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        // The width is the width of parent. The height is the maximum height of the dot
-        final int measuredHeight = (int) Math.ceil(dotMaxRadius * 2);
-        final int measuredWidth = MeasureSpec.getSize(widthMeasureSpec);
-        setMeasuredDimension(measuredWidth, measuredHeight);
     }
 
     /**
@@ -303,6 +259,15 @@ public class MovingDots extends View {
         };
     }
 
+    public int getCurrentDot() {
+        return currentDot;
+    }
+
+    public void setCurrentDot(int currentDot) {
+        this.currentDot = currentDot;
+        invalidate();
+    }
+
     public int getDotColor() {
         return dotColor;
     }
@@ -315,6 +280,48 @@ public class MovingDots extends View {
     @IntDef({TYPE_BACKWARD, TYPE_FORWARD})
     @Retention(RetentionPolicy.SOURCE)
     public @interface Type {
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+
+        // The total length to be drawn
+        final float drawLength = dotMinRadius * 2 * (dotCount - 1) + 2 * dotMaxRadius + (dotCount - 1) * dotSpacing;
+        // The left most point to be drawn
+        final float left = (canvas.getWidth() - drawLength) / 2;
+
+        // yPos is a constant and never varies, xPos varies one by one so each dot can be drawn
+        float xPos;
+        final float yPos = canvas.getHeight() / 2;
+
+
+        if (tempVisible != isVisible) {
+            drawVisibilityAnimation(canvas, left, yPos);
+            return;
+        } else if (!isVisible) {
+            return;
+        }
+
+        // Do not go before the first dot.
+        if (currentDot < 1) {
+            currentDot = 1;
+        }
+
+        if (currentDot > dotCount) {
+            // Animate if currentDot has exceeded the dotCount
+            drawDotsShiftAnimation(canvas, left, yPos);
+        } else {
+            // If currentDot is between 1 and dotCount, do not animate. Just draw static stuff.
+            drawStaticDots(canvas, left, yPos);
+        }
+    }
+
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        // The width is the width of parent. The height is the maximum height of the dot
+        final int measuredHeight = (int) Math.ceil(dotMaxRadius * 2);
+        final int measuredWidth = MeasureSpec.getSize(widthMeasureSpec);
+        setMeasuredDimension(measuredWidth, measuredHeight);
     }
 
 }
