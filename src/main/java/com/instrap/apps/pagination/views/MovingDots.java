@@ -111,7 +111,7 @@ public class MovingDots extends View {
         lastXPos = lastDotXPos + gap - shift;
         firstXPos = firstDotXPos - shift;
 
-        if (lastRadius == dotMaxRadius) {
+        if (Float.compare(lastRadius, dotMaxRadius) > 0) {
             // Stop animation.
             handlerTraverse.removeCallbacks(runnableTraverse);
             // Make the last dot as the currentDot, so that going backward makes sense
