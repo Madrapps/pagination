@@ -9,6 +9,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -21,7 +22,7 @@ import android.view.animation.LinearInterpolator;
 public class CheezzaDots extends View {
 
     private static final String TAG = "CheezzaDots";
-    private static final int ANIMATION_DURATION = 2000;
+    private static final int ANIMATION_DURATION = 10000;
     private static final int FIRST_TRAVERSE = 1, SECOND_TRAVERSE = 2, THIRD_TRAVERSE = 3;
     private Context context;
     private int defaultDotColor = 0xffffff00, currentDotColor = 0xffff0000;
@@ -110,10 +111,14 @@ public class CheezzaDots extends View {
     }
 
     private void startYAnimator() {
+
+        gapYTopRange = new PointRange(currentDotCentre.y - (int) (0.3f * currentDotRadius), currentDotCentre.y);
+        gapYBottomRange = new PointRange(currentDotCentre.y + (int) (0.3f * currentDotRadius), currentDotCentre.y);
+
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
-        valueAnimator.setDuration(ANIMATION_DURATION / 2);
+        valueAnimator.setDuration(ANIMATION_DURATION / 4);
         valueAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        valueAnimator.setRepeatCount(1);
+        valueAnimator.setRepeatCount(3);
         valueAnimator.setInterpolator(new LinearInterpolator());
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -125,36 +130,19 @@ public class CheezzaDots extends View {
         valueAnimator.start();
     }
 
-//    private void startAnimatorForOutwardToInwardCurve(){
-//        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
-//        valueAnimator.setDuration(ANIMATION_DURATION);
-//        valueAnimator.setInterpolator(new AccelerateInterpolator());
-//        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-//            @Override
-//            public void onAnimationUpdate(ValueAnimator valueAnimator) {
-//                float ratio = (float) valueAnimator.getAnimatedValue();
-//                calculateOutwardToInwardCurve(ratio);
-//
-//
-//            }
-//        });
-//
-//
-//        }
-
     private void startAnimator() {
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
         valueAnimator.setDuration(ANIMATION_DURATION);
-        valueAnimator.setRepeatMode(ValueAnimator.REVERSE);
         valueAnimator.setRepeatCount(2);
+        valueAnimator.setRepeatMode(ValueAnimator.REVERSE);
         valueAnimator.setInterpolator(new AccelerateInterpolator());
         valueAnimator.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animator) {
                 isAnimating = true;
-                //   animator.setDuration((int) (0.3 * ANIMATION_DURATION));
                 repeatCount = 1; // first reversal
+                //   animator.setDuration((int) (0.3 * ANIMATION_DURATION));
             }
 
             @Override
@@ -195,6 +183,9 @@ public class CheezzaDots extends View {
                     angleRightTopRange = new PointRange(360 - 15, 270 + 25);
                     angleRightBottomRange = new PointRange(15, 90 - 25);
                 }
+
+                // TODO: 18/4/16 set duration for each stage of animation
+
 //                if (repeatCount == SECOND_TRAVERSE) {
 //                    animator.setDuration((int) (0.5 * ANIMATION_DURATION));
 //                } else {
@@ -207,12 +198,11 @@ public class CheezzaDots extends View {
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 float animatedValue = (float) valueAnimator.getAnimatedValue();
                 calculateAngle(animatedValue);
-                calculatePointOnCircles();
-                calculateGapAndRadiusPoints(animatedValue);
+                calculatePointOnCircles(animatedValue);
                 invalidate();
             }
         });
-        valueAnimator.setStartDelay(2000);
+        valueAnimator.setStartDelay(1000);
         valueAnimator.start();
     }
 
@@ -223,7 +213,7 @@ public class CheezzaDots extends View {
         leftBottomAngle = getPointFromRangeWithRatio(angleLeftBottomRange, ratio);
     }
 
-    private void calculatePointOnCircles() {
+    private void calculatePointOnCircles(float ratio) {
         if (repeatCount == FIRST_TRAVERSE) {
 
             pointLeftTop = getPointOnCircleWithAngle(rightTopAngle, currentDotRadius, currentDotCentre);
@@ -231,10 +221,12 @@ public class CheezzaDots extends View {
             pointRightTop = getPointOnCircleWithAngle(leftTopAngle, defaultDotRadius, getCentrePointOfCircleWithIndex(currentDotIndex + 1));
             pointRightBottom = getPointOnCircleWithAngle(leftBottomAngle, defaultDotRadius, getCentrePointOfCircleWithIndex(currentDotIndex + 1));
 
-//          gapXRange = new PointRange(currentDotCentre.x + 2 * currentDotRadius, pointLeftTop.x + 2 * (currentDotRadius - (pointLeftTop.x - currentDotCentre.x) + dotSpacing));
             gapXRange = new PointRange(currentDotCentre.x + currentDotRadius + defaultDotRadius, pointLeftTop.x + 2 * (currentDotRadius - (pointLeftTop.x - currentDotCentre.x) + dotSpacing));
 
         } else if (repeatCount == SECOND_TRAVERSE) {
+
+            shrinkingRadius = defaultDotRadius + (int) ((currentDotRadius - defaultDotRadius) * ratio);
+            growingRadius = currentDotRadius + (int) ((defaultDotRadius - currentDotRadius) * ratio);
 
             pointLeftTop = getPointOnCircleWithAngle(rightTopAngle, shrinkingRadius, currentDotCentre);
             pointLeftBottom = getPointOnCircleWithAngle(rightBottomAngle, shrinkingRadius, currentDotCentre);
@@ -254,19 +246,8 @@ public class CheezzaDots extends View {
             Point nextCircleCentre = getCentrePointOfCircleWithIndex(currentDotIndex + 1);
             gapXRange = new PointRange(pointRightTop.x - 2 * (currentDotRadius - (nextCircleCentre.x - pointRightTop.x) + dotSpacing), nextCircleCentre.x - currentDotRadius - defaultDotRadius);
         }
-    }
 
-    private void calculateGapAndRadiusPoints(float ratio) {
-        animGapPointTop.x = getPointFromRangeWithRatio(gapXRange, ratio);
-//        animGapPointTop.y = getPointFromRangeWithRatio(gapYTopRange, ratio);
-
-        animGapPointBottom.x = getPointFromRangeWithRatio(gapXRange, ratio);
-//        animGapPointBottom.y = getPointFromRangeWithRatio(gapYBottomRange, ratio);
-
-        if (repeatCount == SECOND_TRAVERSE) {
-            shrinkingRadius = defaultDotRadius + (int) ((currentDotRadius - defaultDotRadius) * ratio);
-            growingRadius = currentDotRadius + (int) ((defaultDotRadius - currentDotRadius) * ratio);
-        }
+        animGapPointTop.x = animGapPointBottom.x = getPointFromRangeWithRatio(gapXRange, ratio);
     }
 
     private void calculateGapY(float ratio) {
@@ -288,44 +269,35 @@ public class CheezzaDots extends View {
 
     public void paginate(int index) {
         if (currentDotIndex > index) {
-            isForward = false;
             paginatePrevious();
         } else {
-            isForward = true;
             paginateNext();
         }
     }
 
     public void paginateNext() {
-
-        gapXRange = new PointRange(currentDotCentre.x + 2 * currentDotRadius, (int) (getCentrePointOfCircleWithIndex(currentDotIndex + 1).x + defaultDotRadius + 0.5 * dotSpacing));
-        gapYTopRange = new PointRange(currentDotCentre.y, currentDotCentre.y - currentDotRadius / 4);
-        gapYBottomRange = new PointRange(currentDotCentre.y, currentDotCentre.y + currentDotRadius / 4);
-
-        isForward = true;
-        paginate();
-
+        if (!isAnimating) {
+            isForward = true;
+            paginate();
+        }
     }
 
     public void paginatePrevious() {
+        if (!isAnimating) {
+            gapXRange = new PointRange(currentDotCentre.x + 2 * currentDotRadius, (int) (getCentrePointOfCircleWithIndex(currentDotIndex + 1).x + defaultDotRadius + 0.5 * dotSpacing));
+            gapYTopRange = new PointRange(currentDotCentre.y, currentDotCentre.y - currentDotRadius / 4);
+            gapYBottomRange = new PointRange(currentDotCentre.y, currentDotCentre.y + currentDotRadius / 4);
 
-        gapXRange = new PointRange(currentDotCentre.x + 2 * currentDotRadius, (int) (getCentrePointOfCircleWithIndex(currentDotIndex + 1).x + defaultDotRadius + 0.5 * dotSpacing));
-        gapYTopRange = new PointRange(currentDotCentre.y, currentDotCentre.y - currentDotRadius / 4);
-        gapYBottomRange = new PointRange(currentDotCentre.y, currentDotCentre.y + currentDotRadius / 4);
+            isForward = false;
 
-        isForward = false;
-
-        startAnimator();
+            startAnimator();
+        }
     }
 
 
-
-
     private void drawDots(Canvas canvas) {
-
         for (int dotCount = 0; dotCount < visibleDotsCount; dotCount++) {
             Point centre = getCentrePointOfCircleWithIndex(dotCount);
-
             if (isAnimating && repeatCount == SECOND_TRAVERSE) {
                 if (dotCount == currentDotIndex) {
                     canvas.drawCircle(centre.x, centre.y, shrinkingRadius, currentDotPaint);
@@ -353,13 +325,12 @@ public class CheezzaDots extends View {
     private void drawAnim(Canvas canvas) {
 
         Path path = new Path();
-        if (repeatCount == FIRST_TRAVERSE) {
 
+        if (repeatCount == FIRST_TRAVERSE) {
             path.moveTo(pointLeftTop.x, pointLeftTop.y);
             path.cubicTo(pointLeftTop.x, pointLeftTop.y, animGapPointTop.x, currentDotCentre.y, pointLeftBottom.x, pointLeftBottom.y);
 
         } else if (repeatCount == SECOND_TRAVERSE) {
-
             path.moveTo(pointLeftTop.x, pointLeftTop.y);
             path.cubicTo(pointLeftTop.x, pointLeftTop.y, animGapPointTop.x, animGapPointTop.y, pointRightTop.x, pointRightTop.y);
             path.lineTo(pointRightBottom.x, pointRightBottom.y);
@@ -372,22 +343,22 @@ public class CheezzaDots extends View {
         }
         canvas.drawPath(path, movementPaint);
 
-        if (repeatCount == FIRST_TRAVERSE) {
-            canvas.drawCircle(pointLeftTop.x, pointLeftTop.y, 5, dotPaint);
-            canvas.drawCircle(pointLeftBottom.x, pointLeftBottom.y, 5, dotPaint);
-            canvas.drawCircle(animGapPointTop.x, currentDotCentre.y, 5, dotPaint);
-        } else if (repeatCount == SECOND_TRAVERSE) {
-            canvas.drawCircle(pointLeftTop.x, pointLeftTop.y, 5, dotPaint);
-            canvas.drawCircle(animGapPointTop.x, animGapPointTop.y, 5, dotPaint);
-            canvas.drawCircle(pointRightTop.x, pointRightTop.y, 5, dotPaint);
-            canvas.drawCircle(pointRightBottom.x, pointRightBottom.y, 5, dotPaint);
-            canvas.drawCircle(animGapPointBottom.x, animGapPointBottom.y, 5, dotPaint);
-            canvas.drawCircle(pointLeftBottom.x, pointLeftBottom.y, 5, dotPaint);
-        } else if (repeatCount == THIRD_TRAVERSE) {
-            canvas.drawCircle(pointRightTop.x, pointRightTop.y, 5, dotPaint);
-            canvas.drawCircle(animGapPointTop.x, currentDotCentre.y, 5, dotPaint);
-            canvas.drawCircle(pointRightBottom.x, pointRightBottom.y, 5, dotPaint);
-        }
+//        if (repeatCount == FIRST_TRAVERSE) {
+//            canvas.drawCircle(pointLeftTop.x, pointLeftTop.y, 5, dotPaint);
+//            canvas.drawCircle(pointLeftBottom.x, pointLeftBottom.y, 5, dotPaint);
+//            canvas.drawCircle(animGapPointTop.x, currentDotCentre.y, 5, dotPaint);
+//        } else if (repeatCount == SECOND_TRAVERSE) {
+//            canvas.drawCircle(pointLeftTop.x, pointLeftTop.y, 5, dotPaint);
+//            canvas.drawCircle(animGapPointTop.x, animGapPointTop.y, 5, dotPaint);
+//            canvas.drawCircle(pointRightTop.x, pointRightTop.y, 5, dotPaint);
+//            canvas.drawCircle(pointRightBottom.x, pointRightBottom.y, 5, dotPaint);
+//            canvas.drawCircle(animGapPointBottom.x, animGapPointBottom.y, 5, dotPaint);
+//            canvas.drawCircle(pointLeftBottom.x, pointLeftBottom.y, 5, dotPaint);
+//        } else if (repeatCount == THIRD_TRAVERSE) {
+//            canvas.drawCircle(pointRightTop.x, pointRightTop.y, 5, dotPaint);
+//            canvas.drawCircle(animGapPointTop.x, currentDotCentre.y, 5, dotPaint);
+//            canvas.drawCircle(pointRightBottom.x, pointRightBottom.y, 5, dotPaint);
+//        }
     }
 
     private int dpToPx(int dp) {
