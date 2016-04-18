@@ -7,4 +7,13 @@
         <attr name="dot_color" format="color" />
         <attr name="dot_spacing" format="dimension" />
     </declare-styleable>
+    <declare-styleable name="CheezzaDots">
+        <attr name="visible_dot_count" format="integer" />
+        <attr name="default_dot_radius" format="dimension" />
+        <attr name="current_dot_radius" format="dimension" />
+        <attr name="default_dot_color" format="color" />
+        <attr name="current_dot_color" format="color" />
+        <attr name="cheezza_dot_spacing" format="dimension" />
+        <attr name="view_margin" format="dimension" />
+    </declare-styleable>
 </resources>
