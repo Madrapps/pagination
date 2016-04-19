@@ -124,7 +124,7 @@ public class CheezzaDots extends View {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 float ratio = (float) valueAnimator.getAnimatedValue();
-                calculateGapY(ratio);
+                calculateYGap(ratio);
             }
         });
         valueAnimator.start();
@@ -226,7 +226,7 @@ public class CheezzaDots extends View {
         animGapPointTop.x = animGapPointBottom.x = getPointFromRangeWithRatio(gapXRange, ratio);
     }
 
-    private void calculateGapY(float ratio) {
+    private void calculateYGap(float ratio) {
         animGapPointTop.y = getPointFromRangeWithRatio(gapYTopRange, ratio);
         animGapPointBottom.y = getPointFromRangeWithRatio(gapYBottomRange, ratio);
     }
@@ -304,7 +304,6 @@ public class CheezzaDots extends View {
     }
 
     private void drawAnim(Canvas canvas) {
-
         Path path = new Path();
 
         if (repeatCount == FIRST_TRAVERSE) {
@@ -323,23 +322,6 @@ public class CheezzaDots extends View {
 
         }
         canvas.drawPath(path, movementPaint);
-
-//        if (repeatCount == FIRST_TRAVERSE) {
-//            canvas.drawCircle(pointLeftTop.x, pointLeftTop.y, 5, dotPaint);
-//            canvas.drawCircle(pointLeftBottom.x, pointLeftBottom.y, 5, dotPaint);
-//            canvas.drawCircle(animGapPointTop.x, currentDotCentre.y, 5, dotPaint);
-//        } else if (repeatCount == SECOND_TRAVERSE) {
-//            canvas.drawCircle(pointLeftTop.x, pointLeftTop.y, 5, dotPaint);
-//            canvas.drawCircle(animGapPointTop.x, animGapPointTop.y, 5, dotPaint);
-//            canvas.drawCircle(pointRightTop.x, pointRightTop.y, 5, dotPaint);
-//            canvas.drawCircle(pointRightBottom.x, pointRightBottom.y, 5, dotPaint);
-//            canvas.drawCircle(animGapPointBottom.x, animGapPointBottom.y, 5, dotPaint);
-//            canvas.drawCircle(pointLeftBottom.x, pointLeftBottom.y, 5, dotPaint);
-//        } else if (repeatCount == THIRD_TRAVERSE) {
-//            canvas.drawCircle(pointRightTop.x, pointRightTop.y, 5, dotPaint);
-//            canvas.drawCircle(animGapPointTop.x, currentDotCentre.y, 5, dotPaint);
-//            canvas.drawCircle(pointRightBottom.x, pointRightBottom.y, 5, dotPaint);
-//        }
     }
 
     private int dpToPx(int dp) {
