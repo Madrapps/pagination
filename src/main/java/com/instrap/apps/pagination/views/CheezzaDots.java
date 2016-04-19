@@ -13,6 +13,7 @@ import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
 /**
@@ -21,7 +22,6 @@ import android.view.animation.LinearInterpolator;
 public class CheezzaDots extends View {
 
     private static final String TAG = "CheezzaDots";
-    private static final int ANIMATION_DURATION = 5000;
     private static final int FIRST_TRAVERSE = 1, SECOND_TRAVERSE = 2, THIRD_TRAVERSE = 3;
     private Context context;
     private int defaultDotColor = 0xffffff00, currentDotColor = 0xffff0000;
@@ -29,6 +29,7 @@ public class CheezzaDots extends View {
     private int defaultDotRadius = dpToPx(40), currentDotRadius = dpToPx(50);
     private int dotSpacing = dpToPx(50);
     private int dotMarginOffset = dpToPx(10);
+    private int animateDuration = 500;
 
     private int currentDotIndex = 0, repeatCount = 0;
     private Paint defaultDotPaint, currentDotPaint, dotPaint, movementPaint;
@@ -115,7 +116,7 @@ public class CheezzaDots extends View {
         gapYBottomRange = new PointRange(currentDotCentre.y + (int) (0.3f * currentDotRadius), currentDotCentre.y);
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
-        valueAnimator.setDuration(ANIMATION_DURATION / 4);
+        valueAnimator.setDuration(animateDuration / 4);
         valueAnimator.setRepeatMode(ValueAnimator.REVERSE);
         valueAnimator.setRepeatCount(3);
         valueAnimator.setInterpolator(new LinearInterpolator());
@@ -132,7 +133,7 @@ public class CheezzaDots extends View {
     private void startAnimator() {
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
-        valueAnimator.setDuration(ANIMATION_DURATION);
+        valueAnimator.setDuration(animateDuration);
         valueAnimator.setRepeatCount(2);
         valueAnimator.setRepeatMode(ValueAnimator.REVERSE);
         valueAnimator.setInterpolator(new AccelerateInterpolator());
@@ -141,7 +142,6 @@ public class CheezzaDots extends View {
             public void onAnimationStart(Animator animator) {
                 isAnimating = true;
                 repeatCount = 1; // first reversal
-                //   animator.setDuration((int) (0.3 * ANIMATION_DURATION));
             }
 
             @Override
@@ -164,32 +164,19 @@ public class CheezzaDots extends View {
                     startYAnimator();
                     animator.setInterpolator(new AccelerateDecelerateInterpolator());
 
-                    dotPaint.setColor(Color.BLUE);
-
                     angleLeftTopRange = new PointRange(270 - 25, 180 + 7);
                     angleLeftBottomRange = new PointRange(90 + 25, 180 - 7);
                     angleRightTopRange = new PointRange(360 - 7, 270 + 25);
                     angleRightBottomRange = new PointRange(7, 90 - 25);
 
                 } else {
-
-                    dotPaint.setColor(Color.BLACK);
-
-                    animator.setInterpolator(new AccelerateInterpolator());
+                    animator.setInterpolator(new DecelerateInterpolator());
 
                     angleLeftTopRange = new PointRange(270 - 25, 180 + 25);
                     angleLeftBottomRange = new PointRange(90 + 25, 180 - 25);
                     angleRightTopRange = new PointRange(360 - 25, 270 + 25);
                     angleRightBottomRange = new PointRange(25, 90 - 25);
                 }
-
-                // TODO: 18/4/16 set duration for each stage of animation
-
-//                if (repeatCount == SECOND_TRAVERSE) {
-//                    animator.setDuration((int) (0.5 * ANIMATION_DURATION));
-//                } else {
-//                    animator.setDuration((int) (0.3 * ANIMATION_DURATION));
-//                }
             }
         });
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -221,7 +208,7 @@ public class CheezzaDots extends View {
             pointRightBottom = getPointOnCircleWithAngle(leftBottomAngle, defaultDotRadius, getCentrePointOfCircleWithIndex(currentDotIndex + 1));
 
             // TODO: 19/4/16 x should be calculated only once for a stage
-            gapXRange = new PointRange(currentDotCentre.x + currentDotRadius + (int) (0.5f * defaultDotRadius), pointLeftTop.x + 2 * (currentDotRadius - (pointLeftTop.x - currentDotCentre.x) + dotSpacing));
+            gapXRange = new PointRange(currentDotCentre.x + currentDotRadius + (int) (0.25f * defaultDotRadius), pointLeftTop.x + 2 * (currentDotRadius - (pointLeftTop.x - currentDotCentre.x) + dotSpacing));
 
         } else if (repeatCount == SECOND_TRAVERSE) {
 
@@ -244,7 +231,7 @@ public class CheezzaDots extends View {
             pointRightBottom = getPointOnCircleWithAngle(leftBottomAngle, currentDotRadius, getCentrePointOfCircleWithIndex(currentDotIndex + 1));
 
             Point nextCircleCentre = getCentrePointOfCircleWithIndex(currentDotIndex + 1);
-            gapXRange = new PointRange(pointRightTop.x - 2 * (currentDotRadius - (nextCircleCentre.x - pointRightTop.x) + dotSpacing), nextCircleCentre.x - currentDotRadius - (int) (0.5f * defaultDotRadius));
+            gapXRange = new PointRange(pointRightTop.x - 2 * (currentDotRadius - (nextCircleCentre.x - pointRightTop.x) + dotSpacing), nextCircleCentre.x - currentDotRadius - (int) (0.25f * defaultDotRadius));
 
         }
 
