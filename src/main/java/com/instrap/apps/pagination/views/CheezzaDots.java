@@ -9,7 +9,6 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Point;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
@@ -22,7 +21,7 @@ import android.view.animation.LinearInterpolator;
 public class CheezzaDots extends View {
 
     private static final String TAG = "CheezzaDots";
-    private static final int ANIMATION_DURATION = 10000;
+    private static final int ANIMATION_DURATION = 5000;
     private static final int FIRST_TRAVERSE = 1, SECOND_TRAVERSE = 2, THIRD_TRAVERSE = 3;
     private Context context;
     private int defaultDotColor = 0xffffff00, currentDotColor = 0xffff0000;
@@ -178,10 +177,10 @@ public class CheezzaDots extends View {
 
                     animator.setInterpolator(new AccelerateInterpolator());
 
-                    angleLeftTopRange = new PointRange(270 - 25, 180 + 15);
-                    angleLeftBottomRange = new PointRange(90 + 25, 180 - 15);
-                    angleRightTopRange = new PointRange(360 - 15, 270 + 25);
-                    angleRightBottomRange = new PointRange(15, 90 - 25);
+                    angleLeftTopRange = new PointRange(270 - 25, 180 + 25);
+                    angleLeftBottomRange = new PointRange(90 + 25, 180 - 25);
+                    angleRightTopRange = new PointRange(360 - 25, 270 + 25);
+                    angleRightBottomRange = new PointRange(25, 90 - 25);
                 }
 
                 // TODO: 18/4/16 set duration for each stage of animation
@@ -221,7 +220,8 @@ public class CheezzaDots extends View {
             pointRightTop = getPointOnCircleWithAngle(leftTopAngle, defaultDotRadius, getCentrePointOfCircleWithIndex(currentDotIndex + 1));
             pointRightBottom = getPointOnCircleWithAngle(leftBottomAngle, defaultDotRadius, getCentrePointOfCircleWithIndex(currentDotIndex + 1));
 
-            gapXRange = new PointRange(currentDotCentre.x + currentDotRadius + defaultDotRadius, pointLeftTop.x + 2 * (currentDotRadius - (pointLeftTop.x - currentDotCentre.x) + dotSpacing));
+            // TODO: 19/4/16 x should be calculated only once for a stage
+            gapXRange = new PointRange(currentDotCentre.x + currentDotRadius + (int) (0.5f * defaultDotRadius), pointLeftTop.x + 2 * (currentDotRadius - (pointLeftTop.x - currentDotCentre.x) + dotSpacing));
 
         } else if (repeatCount == SECOND_TRAVERSE) {
 
@@ -244,7 +244,8 @@ public class CheezzaDots extends View {
             pointRightBottom = getPointOnCircleWithAngle(leftBottomAngle, currentDotRadius, getCentrePointOfCircleWithIndex(currentDotIndex + 1));
 
             Point nextCircleCentre = getCentrePointOfCircleWithIndex(currentDotIndex + 1);
-            gapXRange = new PointRange(pointRightTop.x - 2 * (currentDotRadius - (nextCircleCentre.x - pointRightTop.x) + dotSpacing), nextCircleCentre.x - currentDotRadius - defaultDotRadius);
+            gapXRange = new PointRange(pointRightTop.x - 2 * (currentDotRadius - (nextCircleCentre.x - pointRightTop.x) + dotSpacing), nextCircleCentre.x - currentDotRadius - (int) (0.5f * defaultDotRadius));
+
         }
 
         animGapPointTop.x = animGapPointBottom.x = getPointFromRangeWithRatio(gapXRange, ratio);
@@ -259,10 +260,10 @@ public class CheezzaDots extends View {
     private void paginate() {
 
         //wrt path, right: top:360-270, bottom:0-90, left: top:270-180 bottom:90-180
-        angleLeftTopRange = new PointRange(270 - 25, 180 + 15);
-        angleLeftBottomRange = new PointRange(90 + 25, 180 - 15);
-        angleRightTopRange = new PointRange(360 - 15, 270 + 25);
-        angleRightBottomRange = new PointRange(15, 90 - 25);
+        angleLeftTopRange = new PointRange(270 - 25, 180 + 25);
+        angleLeftBottomRange = new PointRange(90 + 25, 180 - 25);
+        angleRightTopRange = new PointRange(360 - 25, 270 + 25);
+        angleRightBottomRange = new PointRange(25, 90 - 25);
 
         startAnimator();
     }
