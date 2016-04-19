@@ -131,7 +131,6 @@ public class CheezzaDots extends View {
     }
 
     private void startAnimator() {
-
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
         valueAnimator.setDuration(animateDuration);
         valueAnimator.setRepeatCount(2);
@@ -159,24 +158,13 @@ public class CheezzaDots extends View {
             @Override
             public void onAnimationRepeat(Animator animator) {
                 repeatCount++;
-
                 if (repeatCount == SECOND_TRAVERSE) {
                     startYAnimator();
                     animator.setInterpolator(new AccelerateDecelerateInterpolator());
-
-                    angleLeftTopRange = new PointRange(270 - 25, 180 + 7);
-                    angleLeftBottomRange = new PointRange(90 + 25, 180 - 7);
-                    angleRightTopRange = new PointRange(360 - 7, 270 + 25);
-                    angleRightBottomRange = new PointRange(7, 90 - 25);
-
                 } else {
                     animator.setInterpolator(new DecelerateInterpolator());
-
-                    angleLeftTopRange = new PointRange(270 - 25, 180 + 25);
-                    angleLeftBottomRange = new PointRange(90 + 25, 180 - 25);
-                    angleRightTopRange = new PointRange(360 - 25, 270 + 25);
-                    angleRightBottomRange = new PointRange(25, 90 - 25);
                 }
+                setAngleRange();
             }
         });
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
@@ -244,15 +232,19 @@ public class CheezzaDots extends View {
     }
 
 
-    private void paginate() {
-
+    private void setAngleRange() {
         //wrt path, right: top:360-270, bottom:0-90, left: top:270-180 bottom:90-180
-        angleLeftTopRange = new PointRange(270 - 25, 180 + 25);
-        angleLeftBottomRange = new PointRange(90 + 25, 180 - 25);
-        angleRightTopRange = new PointRange(360 - 25, 270 + 25);
-        angleRightBottomRange = new PointRange(25, 90 - 25);
-
-        startAnimator();
+        if (repeatCount == SECOND_TRAVERSE) {
+            angleLeftTopRange = new PointRange(245, 187);
+            angleLeftBottomRange = new PointRange(115, 173);
+            angleRightTopRange = new PointRange(353, 295);
+            angleRightBottomRange = new PointRange(7, 65);
+        } else {
+            angleLeftTopRange = new PointRange(245, 205);
+            angleLeftBottomRange = new PointRange(115, 155);
+            angleRightTopRange = new PointRange(335, 295);
+            angleRightBottomRange = new PointRange(25, 65);
+        }
     }
 
     public void paginate(int index) {
@@ -266,7 +258,8 @@ public class CheezzaDots extends View {
     public void paginateNext() {
         if (!isAnimating) {
             isForward = true;
-            paginate();
+            setAngleRange();
+            startAnimator();
         }
     }
 
@@ -277,7 +270,7 @@ public class CheezzaDots extends View {
             gapYBottomRange = new PointRange(currentDotCentre.y, currentDotCentre.y + currentDotRadius / 4);
 
             isForward = false;
-
+            setAngleRange();
             startAnimator();
         }
     }
