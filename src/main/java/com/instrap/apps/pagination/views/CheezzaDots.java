@@ -142,7 +142,6 @@ public class CheezzaDots extends View {
             public void onAnimationStart(Animator animator) {
                 isAnimating = true;
                 repeatCount = 1; // first reversal
-                Log.d(TAG, "Current points " + currentDotCentre.toString());
             }
 
             @Override
@@ -194,7 +193,6 @@ public class CheezzaDots extends View {
 
         if (repeatCount == FIRST_TRAVERSE) {
 
-
             pointLeftTop = getPointOnCircleWithAngle(rightTopAngle, currentDotRadius, currentDotCentre);
             pointLeftBottom = getPointOnCircleWithAngle(rightBottomAngle, currentDotRadius, currentDotCentre);
             pointRightTop = getPointOnCircleWithAngle(leftTopAngle, defaultDotRadius, getCentrePointOfCircleWithIndex(isReverse ? currentDotIndex - 1 : currentDotIndex + 1));
@@ -238,11 +236,6 @@ public class CheezzaDots extends View {
 
         }
 
-        if (isReverse) {
-            swapObjects(pointLeftTop, pointRightTop);
-            swapObjects(pointLeftBottom, pointRightBottom);
-        }
-
         animGapPointTop.x = animGapPointBottom.x = getPointFromRangeWithRatio(gapXRange, ratio);
     }
 
@@ -254,21 +247,40 @@ public class CheezzaDots extends View {
 
     private void setAngleRange() {
         //wrt path, right: top:360-270, bottom:0-90, left: top:270-180 bottom:90-180
-        if (repeatCount == SECOND_TRAVERSE) {
+
+
+        if (isReverse) {
+
+            if (repeatCount == SECOND_TRAVERSE) {
+                angleLeftTopRange = new PointRange(353, 295);
+                angleLeftBottomRange = new PointRange(7, 65);
+                angleRightTopRange = new PointRange(245, 187);
+                angleRightBottomRange = new PointRange(115, 173);
+            } else {
+                angleLeftTopRange =  new PointRange(335, 295);
+                angleLeftBottomRange = new PointRange(25, 65);
+                angleRightTopRange = new PointRange(245, 205);
+                angleRightBottomRange = new PointRange(115, 155);
+            }
+
+        } else {
+            if (repeatCount == SECOND_TRAVERSE) {
 //            angleLeftTopRange = new PointRange(255, 187);
 //            angleLeftBottomRange = new PointRange(105, 173);
 //            angleRightTopRange = new PointRange(353, 285);
 //            angleRightBottomRange = new PointRange(7, 75);
 
-            angleLeftTopRange = new PointRange(245, 187);
-            angleLeftBottomRange = new PointRange(115, 173);
-            angleRightTopRange = new PointRange(353, 295);
-            angleRightBottomRange = new PointRange(7, 65);
-        } else {
-            angleLeftTopRange = new PointRange(245, 205);
-            angleLeftBottomRange = new PointRange(115, 155);
-            angleRightTopRange = new PointRange(335, 295);
-            angleRightBottomRange = new PointRange(25, 65);
+                angleLeftTopRange = new PointRange(245, 187);
+                angleLeftBottomRange = new PointRange(115, 173);
+                angleRightTopRange = new PointRange(353, 295);
+                angleRightBottomRange = new PointRange(7, 65);
+            } else {
+                angleLeftTopRange = new PointRange(245, 205);
+                angleLeftBottomRange = new PointRange(115, 155);
+                angleRightTopRange = new PointRange(335, 295);
+                angleRightBottomRange = new PointRange(25, 65);
+            }
+
         }
     }
 
@@ -331,8 +343,6 @@ public class CheezzaDots extends View {
             path.moveTo(pointLeftTop.x, pointLeftTop.y);
             path.cubicTo(pointLeftTop.x, pointLeftTop.y, animGapPointTop.x, currentDotCentre.y, pointLeftBottom.x, pointLeftBottom.y);
 
-            Log.d(TAG, "First Traversal" + pointLeftTop.x + "," + pointLeftTop.y);
-
         } else if (repeatCount == SECOND_TRAVERSE) {
             path.moveTo(pointLeftTop.x, pointLeftTop.y);
             path.cubicTo(pointLeftTop.x, pointLeftTop.y, animGapPointTop.x, animGapPointTop.y, pointRightTop.x, pointRightTop.y);
@@ -383,18 +393,6 @@ public class CheezzaDots extends View {
         point.x = dotMarginOffset + currentDotRadius + (index * (2 * defaultDotRadius + dotSpacing));
         point.y = dotMarginOffset + currentDotRadius;
         return point;
-    }
-
-    private void swapObjects(Object object1, Object object2) {
-        Object temp = object1;
-        object1 = object2;
-        object2 = temp;
-    }
-
-    private void swapObjects(int x, int y) {
-        x = x + y;
-        y = x - y;
-        x = x - y;
     }
 
     private class PointRange {
