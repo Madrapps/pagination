@@ -112,14 +112,13 @@ public class CheezzaDots extends View {
     }
 
     private void startYAnimator() {
-
         gapYTopRange = new PointRange(currentDotCentre.y - (int) (0.3f * currentDotRadius), currentDotCentre.y);
         gapYBottomRange = new PointRange(currentDotCentre.y + (int) (0.3f * currentDotRadius), currentDotCentre.y);
 
         ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
-        valueAnimator.setDuration(animateDuration / 2);
+        valueAnimator.setDuration(animateDuration / 4);
         valueAnimator.setRepeatMode(ValueAnimator.REVERSE);
-        valueAnimator.setRepeatCount(1); //3
+        valueAnimator.setRepeatCount(3);
         valueAnimator.setInterpolator(new LinearInterpolator());
         valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
@@ -200,10 +199,11 @@ public class CheezzaDots extends View {
 
             // TODO: 19/4/16 x should be calculated only once for a stage
             if (isReverse) {
-                gapXRange = new PointRange(currentDotCentre.x - currentDotRadius - (int) (0.25f * defaultDotRadius), pointLeftTop.x - 2 * (currentDotRadius - (pointLeftTop.x - currentDotCentre.x) + dotSpacing));
+                gapXRange = new PointRange(currentDotCentre.x - currentDotRadius - (int) (0.5f * defaultDotRadius), pointLeftTop.x - 2 * (currentDotRadius - (currentDotCentre.x - pointLeftTop.x) + dotSpacing));
             } else {
-                gapXRange = new PointRange(currentDotCentre.x + currentDotRadius + (int) (0.25f * defaultDotRadius), pointLeftTop.x + 2 * (currentDotRadius - (pointLeftTop.x - currentDotCentre.x) + dotSpacing));
+                gapXRange = new PointRange(currentDotCentre.x + currentDotRadius + (int) (0.5f * defaultDotRadius), pointLeftTop.x + 2 * (currentDotRadius - (pointLeftTop.x - currentDotCentre.x) + dotSpacing));
             }
+
         } else if (repeatCount == SECOND_TRAVERSE) {
 
             shrinkingRadius = defaultDotRadius + (int) ((currentDotRadius - defaultDotRadius) * ratio);
@@ -214,9 +214,9 @@ public class CheezzaDots extends View {
             pointRightTop = getPointOnCircleWithAngle(leftTopAngle, growingRadius, getCentrePointOfCircleWithIndex(isReverse ? currentDotIndex - 1 : currentDotIndex + 1));
             pointRightBottom = getPointOnCircleWithAngle(leftBottomAngle, growingRadius, getCentrePointOfCircleWithIndex(isReverse ? currentDotIndex - 1 : currentDotIndex + 1));
             if (isReverse) {
-                gapXRange = new PointRange(currentDotCentre.x + defaultDotRadius, getCentrePointOfCircleWithIndex(isReverse ? currentDotIndex + 1 : currentDotIndex - 1).x - defaultDotRadius); //- (int) (0.2 * dotSpacing)
+                gapXRange = new PointRange(currentDotCentre.x - defaultDotRadius, getCentrePointOfCircleWithIndex(isReverse ? currentDotIndex - 1 : currentDotIndex + 1).x + defaultDotRadius);
             } else {
-                gapXRange = new PointRange(currentDotCentre.x - defaultDotRadius, getCentrePointOfCircleWithIndex(isReverse ? currentDotIndex + 1 : currentDotIndex - 1).x + defaultDotRadius);
+                gapXRange = new PointRange(currentDotCentre.x + defaultDotRadius, getCentrePointOfCircleWithIndex(isReverse ? currentDotIndex - 1 : currentDotIndex + 1).x - defaultDotRadius); //- (int) (0.2 * dotSpacing)
             }
         } else if (repeatCount == THIRD_TRAVERSE) {
 
@@ -228,8 +228,10 @@ public class CheezzaDots extends View {
 
             Point nextCircleCentre = getCentrePointOfCircleWithIndex(isReverse ? currentDotIndex - 1 : currentDotIndex + 1);
 
+            Log.d(TAG, currentDotCentre.toString() + " " + nextCircleCentre.toString());
+
             if (isReverse) {
-                gapXRange = new PointRange(pointRightTop.x + 2 * (currentDotRadius - (nextCircleCentre.x - pointRightTop.x) + dotSpacing), nextCircleCentre.x + currentDotRadius + (int) (0.25f * defaultDotRadius));
+                gapXRange = new PointRange(pointRightTop.x + 2 * (currentDotRadius - (pointRightTop.x - nextCircleCentre.x) + dotSpacing), nextCircleCentre.x + currentDotRadius + (int) (0.25f * defaultDotRadius));
             } else {
                 gapXRange = new PointRange(pointRightTop.x - 2 * (currentDotRadius - (nextCircleCentre.x - pointRightTop.x) + dotSpacing), nextCircleCentre.x - currentDotRadius - (int) (0.25f * defaultDotRadius));
             }
@@ -252,12 +254,12 @@ public class CheezzaDots extends View {
         if (isReverse) {
 
             if (repeatCount == SECOND_TRAVERSE) {
-                angleLeftTopRange = new PointRange(353, 295);
-                angleLeftBottomRange = new PointRange(7, 65);
-                angleRightTopRange = new PointRange(245, 187);
-                angleRightBottomRange = new PointRange(115, 173);
+                angleLeftTopRange = new PointRange(295, 353);
+                angleLeftBottomRange = new PointRange(65, 7);
+                angleRightTopRange = new PointRange(187, 245);
+                angleRightBottomRange = new PointRange(173, 115);
             } else {
-                angleLeftTopRange =  new PointRange(335, 295);
+                angleLeftTopRange = new PointRange(335, 295);
                 angleLeftBottomRange = new PointRange(25, 65);
                 angleRightTopRange = new PointRange(245, 205);
                 angleRightBottomRange = new PointRange(115, 155);
