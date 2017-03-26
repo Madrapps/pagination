@@ -291,9 +291,7 @@ public class MovingDots extends View {
         final float left = (canvas.getWidth() - drawLength) / 2;
 
         // yPos is a constant and never varies, xPos varies one by one so each dot can be drawn
-        float xPos;
         final float yPos = canvas.getHeight() / 2;
-
 
         if (tempVisible != isVisible) {
             drawVisibilityAnimation(canvas, left, yPos);
